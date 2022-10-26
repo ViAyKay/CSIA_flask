@@ -4,12 +4,26 @@
     <br>
     <h2>Please login to continue</h2>
 
-    <form>
+    {% if name %}
+    <h3>Hello {{ name }}</h3>
+    {% else %}
+    <h1>Fill out the details below</h1>
+    <br/>
+    <form method="POST">
+        {{ form.hidden_tag() }}
 
-
-
+        {{ form.name.label }}
+        {{ form.name() }}
+        <br/>
+        {{ form.password.label }}
+        {{ form.password() }}
+        <br/>
+        {{ form.submit() }}
         
+  
     </form>
+
+    {% endif %}
 
 
 
