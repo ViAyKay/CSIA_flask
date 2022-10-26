@@ -34,7 +34,6 @@ class Borrow (db.Model):
 
 
 
-
 @app.route('/')
 def home_page():
     return render_template('loginpage.html') 
