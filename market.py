@@ -4,8 +4,9 @@ from flask import Flask, render_template, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
+from wtforms import StringField, SubmitField, PasswordField
 from wtforms.validators import DataRequired
+from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user 
 
 from sqlalchemy import ForeignKey
 
@@ -17,9 +18,18 @@ app.config['SECRET_KEY'] = "whatgoesupmustneverstayupforthedevillooksforanomalou
 
 #Create a form class
 class LoginForm(FlaskForm):
-    name = StringField("Email", validators=[DataRequired()])
-    password = StringField("Password", validators=[DataRequired()])
+    name = StringField("Username", validators=[DataRequired()])
+    password = PasswordField("Password", validators=[DataRequired()])
     submit = SubmitField("Log In")
+
+#Flask_Login Stuff
+login_manager= LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return Users.query.get(int(user_id))
 
 class Book (db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -28,11 +38,10 @@ class Book (db.Model):
     cover_image = db.Column(db.BLOB, nullable=False)
     available = db.Column(db.Boolean, nullable=False, default=True)
 
-class Librarian (db.Model):
+class  Users(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     password = db.Column(db.String(100), nullable=False, unique=True)
-    email = db.Column(db.String(200), nullable=False, unique=True)
     superuser = db.Column(db.Boolean, nullable=False)
 
 class Borrow (db.Model):
@@ -56,6 +65,11 @@ def login_page():
         form.password.data =''
 
     return render_template('loginpage.html', name = name, password = password, form = form) 
+
+@app.route('/libview', methods=['GET', 'POST'])
+@login_required
+def libview():
+    return render_template('libview.html')
 
 
 
