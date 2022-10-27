@@ -51,7 +51,9 @@ class  Users(db.Model, UserMixin):
     #password = db.Column(db.String(100), nullable=False, unique=True)
     superuser = db.Column(db.Boolean, nullable=False)
     #password_stuff
-    password_hash = db.Column(db.String(128))
+    password = db.Column(db.String(128))
+    #password_hash = db.Column(db.String(128))
+
 
     @property
     def password(self):
@@ -103,8 +105,20 @@ def add_user():
     if form.validate_on_submit():
         user = Users.query.filter_by(username=form.name.data).first()
         if user is None:
-    return render_template("onetimeuseradd.html")
+            user = Users(name=form.name.data,superuser = True, password=form.password.data)
+            db.session.add(user)
+            db.session.commit()
+        name = form.name.data
+        form.name.data = ''
+        form.password.data = ''
+        our_users = Users.query.order_by(Users.data_added)
 
+        return render_template ( "onetimeuseradd.html", form=form, name=name, our_users=our_users)
+
+
+
+    
+    
 
 
 

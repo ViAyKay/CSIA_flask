@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+    <h1>Enter the stuff here</h1> 
+    <br>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        {{ form.name.label }}
+        {{ form.name() }}
+        <br/>
+        {{ form.password.label }}
+        {{ form.password() }}
+        <br/>
+        {{ form.submit() }}
+        
+  
+    </form>
+
+
+
+
+</html>
