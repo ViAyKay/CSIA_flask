@@ -1,12 +1,14 @@
 from enum import unique
 from pydoc import synopsis
-from flask import Flask, render_template, url_for
+from django.shortcuts import redirect, render
+from flask import Flask, render_template, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField
+from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError
 from wtforms.validators import DataRequired
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user 
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from sqlalchemy import ForeignKey
 
@@ -15,6 +17,11 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://computer:spark@localhost/librar
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 app.config['SECRET_KEY'] = "whatgoesupmustneverstayupforthedevillooksforanomalousbasterds101"
+
+#One time use form to create account for librarian DELETE THIS AFTER CREATING THE ACCOUNT
+class UserForm(FlaskForm):
+    username = StringField("Name", validators=[DataRequired()])
+    password = PasswordField("Password", validators=[DataRequired()])
 
 #Create a form class
 class LoginForm(FlaskForm):
@@ -41,8 +48,21 @@ class Book (db.Model):
 class  Users(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    password = db.Column(db.String(100), nullable=False, unique=True)
+    #password = db.Column(db.String(100), nullable=False, unique=True)
     superuser = db.Column(db.Boolean, nullable=False)
+    #password_stuff
+    password_hash = db.Column(db.String(128))
+
+    @property
+    def password(self):
+      raise AttributeError('password is unreadable')
+
+    @password.setter
+    def password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def verify_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
 class Borrow (db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -59,10 +79,15 @@ def login_page():
     form = LoginForm()
     #Validate Form
     if form.validate_on_submit():
-        name = form.name.data
-        password = form.password.data
-        form.name.data = ''
-        form.password.data =''
+        user = Users.query.filter_by(username=form.username.data).first()
+        if user:
+            if check_password_hash(user.password_hash, form.password.data):
+                login_user(user)
+                return redirect(url_for(libview))
+            else:
+                flash("incorrect credentials")
+
+       
 
     return render_template('loginpage.html', name = name, password = password, form = form) 
 
@@ -70,6 +95,15 @@ def login_page():
 @login_required
 def libview():
     return render_template('libview.html')
+
+@app.route('/u', methods=['GET', 'POST'])
+def add_user():
+    name = None
+    form = UserForm()
+    if form.validate_on_submit():
+        user = Users.query.filter_by(username=form.name.data).first()
+        if user is None:
+    return render_template("onetimeuseradd.html")
 
 
 
