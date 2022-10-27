@@ -4,6 +4,7 @@ from django.shortcuts import redirect, render
 from flask import Flask, render_template, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date
+from datetime import datetime
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError
 from wtforms.validators import DataRequired
@@ -111,9 +112,9 @@ def add_user():
         name = form.name.data
         form.name.data = ''
         form.password.data = ''
-        our_users = Users.query.order_by(Users.data_added)
-
-        return render_template ( "onetimeuseradd.html", form=form, name=name, our_users=our_users)
+    
+    our_users = Users.query.order_by(Users.date_added)
+    return render_template ( "onetimeuseradd.html", form=form, name=name, our_users=our_users)
 
 
 
