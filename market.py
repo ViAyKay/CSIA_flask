@@ -1,7 +1,7 @@
 from enum import unique
 from pydoc import synopsis
 from django.shortcuts import redirect, render
-from flask import Flask, render_template, url_for, flash
+from flask import Flask, render_template, url_for, flash, request, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date
 from datetime import datetime
@@ -10,6 +10,8 @@ from wtforms import StringField, SubmitField, PasswordField, BooleanField, Valid
 from wtforms.validators import DataRequired
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user 
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
+from flask_migrate import Migrate
 
 from sqlalchemy import ForeignKey
 
@@ -17,18 +19,8 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://computer:spark@localhost/library_sys'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 app.config['SECRET_KEY'] = "whatgoesupmustneverstayupforthedevillooksforanomalousbasterds101"
-
-#One time use form to create account for librarian DELETE THIS AFTER CREATING THE ACCOUNT
-class UserForm(FlaskForm):
-    username = StringField("Name", validators=[DataRequired()])
-    password = PasswordField("Password", validators=[DataRequired()])
-
-#Create a form class
-class LoginForm(FlaskForm):
-    name = StringField("Username", validators=[DataRequired()])
-    password = PasswordField("Password", validators=[DataRequired()])
-    submit = SubmitField("Log In")
 
 #Flask_Login Stuff
 login_manager= LoginManager()
@@ -73,7 +65,17 @@ class Borrow (db.Model):
     book_id = db.Column(db.Integer, ForeignKey(Book.id))
     return_date = db.Column(db.Date, nullable=False) 
 
+#One time use form to create account for librarian DELETE THIS AFTER CREATING THE ACCOUNT
+class UserForm(FlaskForm):
+    name = StringField("Name", validators=[DataRequired()])
+    password = PasswordField("Password", validators=[DataRequired()])
+    submit = SubmitField("Submit")
 
+#Create a form class
+class LoginForm(FlaskForm):
+    name = StringField("Username", validators=[DataRequired()])
+    password = PasswordField("Password", validators=[DataRequired()])
+    submit = SubmitField("Log In")
 
 @app.route('/', methods=['GET', 'POST'])
 def login_page():
@@ -82,7 +84,7 @@ def login_page():
     form = LoginForm()
     #Validate Form
     if form.validate_on_submit():
-        user = Users.query.filter_by(username=form.username.data).first()
+        user = Users.query.filter_by(name=form.username.data).first()
         if user:
             if check_password_hash(user.password_hash, form.password.data):
                 login_user(user)
@@ -104,7 +106,7 @@ def add_user():
     name = None
     form = UserForm()
     if form.validate_on_submit():
-        user = Users.query.filter_by(username=form.name.data).first()
+        user = Users.query.filter_by(name=form.name.data).first()
         if user is None:
             user = Users(name=form.name.data,superuser = True, password=form.password.data)
             db.session.add(user)
@@ -113,8 +115,8 @@ def add_user():
         form.name.data = ''
         form.password.data = ''
     
-    our_users = Users.query.order_by(Users.date_added)
-    return render_template ( "onetimeuseradd.html", form=form, name=name, our_users=our_users)
+    #our_users = Users.query.order_by(Users.date_added)
+    return render_template ( "onetimeuseradd.html", form=form, name=name)#our_users=our_users)
 
 
 
