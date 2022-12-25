@@ -1,7 +1,6 @@
 from enum import unique
 from pydoc import synopsis
-from django.shortcuts import redirect, render
-from flask import Flask, render_template, url_for, flash, request, url_for
+from flask import Flask, render_template, url_for, flash, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date
 from datetime import datetime
@@ -16,7 +15,7 @@ from flask_migrate import Migrate
 from sqlalchemy import ForeignKey
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://computer:spark@localhost/library_sys'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:dangerzone@localhost/library'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
