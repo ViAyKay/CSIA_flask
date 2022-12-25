@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <h1>Enter the book information here</h1> 
+    <br>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        {{ form.title.label }}
+        {{ form.title() }}
+        <br/>
+        {{ form.author.label }}
+        {{ form.author() }}
+        <br/>
+        {{ form.synopsis.label }}
+        {{ form.synopsis() }}
+        <br/>
+        {{ form.available.label }}
+        {{ form.available() }}
+        <br/>
+        {{ form.submit() }}
+        
+  
+    </form>
+
+
+
+
+</html>

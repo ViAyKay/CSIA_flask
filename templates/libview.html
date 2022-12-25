@@ -1,6 +1,19 @@
 <!DOCTYPE html>
 <html>
     <h1>Welcome to library view</h1>
+    <br>
+
+    {% for book in books %}
+    {{ book.id }}
+    {{ book.title }}
+    {{ book.author }}
+    {% if book.available %}
+      Available
+    {% else %}
+      Not Available
+    {% endif %}<br>
+    {% endfor %}
+
 
 
 </html>

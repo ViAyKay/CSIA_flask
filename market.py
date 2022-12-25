@@ -1,6 +1,6 @@
 from enum import unique
 from pydoc import synopsis
-from flask import Flask, render_template, url_for, flash, request, redirect, url_for
+from flask import Flask, request, render_template, url_for, flash,redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date
 from datetime import datetime
@@ -9,8 +9,10 @@ from wtforms import StringField, SubmitField, PasswordField, BooleanField, Valid
 from wtforms.validators import DataRequired
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user 
 from werkzeug.security import generate_password_hash, check_password_hash
+from wtforms.widgets import TextArea
 import os
 from flask_migrate import Migrate
+import uuid as uuid
 
 from sqlalchemy import ForeignKey
 
@@ -21,20 +23,19 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 app.config['SECRET_KEY'] = "whatgoesupmustneverstayupforthedevillooksforanomalousbasterds101"
 
-#Flask_Login Stuff
-login_manager= LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
-
-@login_manager.user_loader
-def load_user(user_id):
-    return Users.query.get(int(user_id))
+class Borrowers (db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    first_Name = db.Column(db.String(255), nullable=False)
+    last_Name = db.Column(db.String(255), nullable=False)
+    email = db.Column(db.String(120), nullable=False)
+    apartment_number = db.Column(db.Integer, nullable = False)
 
 class Book (db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
+    author = db.Column(db.String(255), nullable=False)
     synopsis = db.Column(db.Text, nullable=True)
-    cover_image = db.Column(db.BLOB, nullable=False)
+    cover_image = db.Column(db.BLOB, nullable=True)
     available = db.Column(db.Boolean, nullable=False, default=True)
 
 class  Users(db.Model, UserMixin):
@@ -43,8 +44,8 @@ class  Users(db.Model, UserMixin):
     #password = db.Column(db.String(100), nullable=False, unique=True)
     superuser = db.Column(db.Boolean, nullable=False)
     #password_stuff
-    password = db.Column(db.String(128))
-    #password_hash = db.Column(db.String(128))
+    #password = db.Column(db.String(128))
+    password_hash = db.Column(db.String(128))
 
 
     @property
@@ -62,13 +63,49 @@ class Borrow (db.Model):
     id = db.Column(db.Integer, primary_key=True)
     #date = db.Column(db.Date, default=date.utcnow)
     book_id = db.Column(db.Integer, ForeignKey(Book.id))
+    borrower_id = db.Column(db.Integer, ForeignKey(Borrowers.id))
     return_date = db.Column(db.Date, nullable=False) 
+
+class BookForm(FlaskForm):
+    title = StringField("Title", validators=[DataRequired()])
+    author = StringField("Author", validators=[DataRequired()])
+    synopsis = StringField("Synopsis", validators=[DataRequired()], widget=TextArea())
+    available = BooleanField("Availability", validators=[DataRequired()])
+    submit = SubmitField("Submit")
 
 #One time use form to create account for librarian DELETE THIS AFTER CREATING THE ACCOUNT
 class UserForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired()])
-    password = PasswordField("Password", validators=[DataRequired()])
+    password_hash = PasswordField("Password", validators=[DataRequired()])
     submit = SubmitField("Submit")
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return Users.query.get(int(user_id))
+
+@app.route('/u', methods=['GET', 'POST'])
+def add_user():
+    name = None
+    form = UserForm()
+    #Hashing Password
+    
+    if form.validate_on_submit():
+        user = Users.query.filter_by(name=form.name.data).first()
+        if user is None:
+            hashed_pw = generate_password_hash(form.password_hash.data, "sha256")
+            user = Users(name=form.name.data,superuser = True, password_hash=hashed_pw)
+            db.session.add(user)
+            db.session.commit()
+        name = form.name.data
+        form.name.data = ''
+        form.password_hash.data = ''
+    
+    #our_users = Users.query.order_by(Users.date_added)
+    return render_template ( "onetimeuseradd.html", form=form, name=name)#our_users=our_users)
 
 #Create a form class
 class LoginForm(FlaskForm):
@@ -76,52 +113,58 @@ class LoginForm(FlaskForm):
     password = PasswordField("Password", validators=[DataRequired()])
     submit = SubmitField("Log In")
 
-@app.route('/', methods=['GET', 'POST'])
-def login_page():
-    name = None
-    password = None
+@app.route('/login', methods=['GET', 'POST'])
+def login():
     form = LoginForm()
-    #Validate Form
     if form.validate_on_submit():
-        user = Users.query.filter_by(name=form.username.data).first()
+        user = Users.query.filter_by(name=form.name.data).first()
         if user:
+            #check hash
             if check_password_hash(user.password_hash, form.password.data):
                 login_user(user)
-                return redirect(url_for(libview))
+                flash("LOGIN SUCCESFUL")
+                return redirect(url_for('libview'))
             else:
-                flash("incorrect credentials")
+                flash("WRONG PASSWORD TRY AGAIN") 
+        else:
+            flash("USER DOES NOT EXIST")
 
-       
+    return render_template('loginpage.html', form=form)
 
-    return render_template('loginpage.html', name = name, password = password, form = form) 
+
+
+@app.route('/', methods=['GET', 'POST'])
+def hello_world():
+    return "<p>PLEASE LOG IN TO CONTINUE</p>"
+    
 
 @app.route('/libview', methods=['GET', 'POST'])
 @login_required
 def libview():
-    return render_template('libview.html')
+    #Grab all books from database
+    books = Book.query.order_by(Book.id)
+    return render_template('libview.html', books = books)
 
-@app.route('/u', methods=['GET', 'POST'])
-def add_user():
-    name = None
-    form = UserForm()
+@app.route('/bookadd', methods=['GET', "POST"])
+@login_required
+def add_book():
+    form = BookForm()
+
     if form.validate_on_submit():
-        user = Users.query.filter_by(name=form.name.data).first()
-        if user is None:
-            user = Users(name=form.name.data,superuser = True, password=form.password.data)
-            db.session.add(user)
-            db.session.commit()
-        name = form.name.data
-        form.name.data = ''
-        form.password.data = ''
-    
-    #our_users = Users.query.order_by(Users.date_added)
-    return render_template ( "onetimeuseradd.html", form=form, name=name)#our_users=our_users)
+        book = Book(title=form.title.data, author=form.author.data, synopsis=form.synopsis.data, available=form.available.data)
+        #Clear the form
+        form.title.data = ''
+        form.author.data = ''
+        form.synopsis.data = ''
+        form.available.data = True
 
+        #Add post data to database
+        db.session.add(book)
+        db.session.commit()
 
+        flash("Book added to database successfully")
 
-    
-    
-
+    return render_template("bookadd.html", form=form)
 
 
 
