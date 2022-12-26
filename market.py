@@ -1,6 +1,6 @@
 from enum import unique
 from pydoc import synopsis
-from flask import Flask, request, render_template, url_for, flash,redirect, url_for
+from flask import Flask, request, render_template, url_for, flash,redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date
 from datetime import datetime
@@ -113,7 +113,7 @@ class LoginForm(FlaskForm):
     password = PasswordField("Password", validators=[DataRequired()])
     submit = SubmitField("Log In")
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if form.validate_on_submit():
@@ -122,7 +122,6 @@ def login():
             #check hash
             if check_password_hash(user.password_hash, form.password.data):
                 login_user(user)
-                flash("LOGIN SUCCESFUL")
                 return redirect(url_for('libview'))
             else:
                 flash("WRONG PASSWORD TRY AGAIN") 
@@ -133,9 +132,10 @@ def login():
 
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/globbedygoo', methods=['GET', 'POST'])
 def hello_world():
     return "<p>PLEASE LOG IN TO CONTINUE</p>"
+    
     
 
 @app.route('/libview', methods=['GET', 'POST'])

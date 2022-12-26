@@ -1,19 +1,39 @@
-<!DOCTYPE html>
-<html>
+{% extends 'base.html' %}
+
+
+{% block content %}
+    
     <h1>Welcome to library view</h1>
     <br>
 
-    {% for book in books %}
-    {{ book.id }}
-    {{ book.title }}
-    {{ book.author }}
-    {% if book.available %}
-      Available
-    {% else %}
-      Not Available
-    {% endif %}<br>
-    {% endfor %}
+    <table class="table table-striped table-bordered table-hover">
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col">Id</th>
+          <th scope="col">Title</th>
+          <th scope="col">Author</th>
+          <th scope="col">Availability</th>
+        </tr>
+      </thead>
+      <tbody>  
+        
+      {% for book in books %}
+      <tr>
+        <td>{{ book.id }}</td>
+        <td>{{ book.title }}</td>
+        <td>{{ book.author }}</td>
+        <td>{% if book.available %}
+          Available
+        {% else %}
+          Not Available
+        {% endif %}</td>
+      </tr>
+      {% endfor %}
+        
+      </tbody> 
+    </table>
+
+{% endblock %}
+  
 
 
-
-</html>
