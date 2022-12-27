@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import date
 from datetime import datetime
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError
+from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError, EmailField, IntegerField
 from wtforms.validators import DataRequired
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user 
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -23,12 +23,13 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 app.config['SECRET_KEY'] = "whatgoesupmustneverstayupforthedevillooksforanomalousbasterds101"
 
-class Borrowers (db.Model):
+class Borrower (db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    first_Name = db.Column(db.String(255), nullable=False)
-    last_Name = db.Column(db.String(255), nullable=False)
+    first_name = db.Column(db.String(255), nullable=False)
+    last_name = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(120), nullable=False)
-    apartment_number = db.Column(db.Integer, nullable = False)
+    apartment_number = db.Column(db.String(255), nullable = False)
+    late_returns = db.Column(db.Integer, nullable = False, default=0)
 
 class Book (db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -63,8 +64,16 @@ class Borrow (db.Model):
     id = db.Column(db.Integer, primary_key=True)
     #date = db.Column(db.Date, default=date.utcnow)
     book_id = db.Column(db.Integer, ForeignKey(Book.id))
-    borrower_id = db.Column(db.Integer, ForeignKey(Borrowers.id))
+    borrower_id = db.Column(db.Integer, ForeignKey(Borrower.id))
     return_date = db.Column(db.Date, nullable=False) 
+
+class BorrowerForm(FlaskForm):
+    first_name = StringField("First Name", validators=[DataRequired()])
+    last_name = StringField("Last Name", validators=[DataRequired()])
+    email = EmailField("Email", validators=[DataRequired()], widget=TextArea())
+    apartment_number = StringField("Apartment Number", validators=[DataRequired()])
+    submit = SubmitField("Submit")
+
 
 class BookForm(FlaskForm):
     title = StringField("Title", validators=[DataRequired()])
@@ -134,9 +143,54 @@ def login():
 
 @app.route('/globbedygoo', methods=['GET', 'POST'])
 def hello_world():
-    return "<p>PLEASE LOG IN TO CONTINUE</p>"
-    
-    
+    form = BorrowerForm()
+
+    if form.validate_on_submit():
+        borrower = Borrower(first_name=form.first_name.data, last_name=form.last_name.data, email=form.email.data, apartment_number=form.apartment_number.data)
+        #Clear the form
+        form.first_name.data = ''
+        form.last_name.data = ''
+        form.email.data = ''
+        form.apartment_number.data = ''
+
+        #Add post data to database
+        db.session.add(borrower)
+        db.session.commit()
+
+        flash("Borrower added to database successfully")
+
+    return render_template("borroweradd.html", form=form)
+
+@app.route('/libview/edit/<int:id>', methods=['GET', 'POST'])
+def edit_borrower(id):
+    borrower = Borrower.query.get_or_404(id)
+    form = BorrowerForm()
+    if form.validate_on_submit():
+        borrower.first_name = form.first_name.data
+        borrower.last_name = form.last_name.data
+        borrower.email = form.email.data
+        borrower.apartment_number = form.apartment_number.data
+
+        db.session.add(borrower)
+        db.session.commit()
+        flash("Book information has been updated")
+        return redirect(url_for('brwrview'))
+    form.first_name.data = borrower.first_name
+    form.last_name.data = borrower.last_name
+    form.email.data = borrower.email
+    form.apartment_number.data = borrower.apartment_number
+    return render_template('edit_borrower.html', form=form)
+
+@app.route('/brwrview', methods=['GET', 'POST'])
+@login_required
+def brwrview():
+    #Grab all books from database
+    borrowers = Borrower.query.order_by(Borrower.id)
+    return render_template('brwrview.html', borrowers = borrowers)
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('error.html'), 404
 
 @app.route('/libview', methods=['GET', 'POST'])
 @login_required
@@ -144,6 +198,32 @@ def libview():
     #Grab all books from database
     books = Book.query.order_by(Book.id)
     return render_template('libview.html', books = books)
+
+@app.route('/libview/<int:id>')
+def booklook(id):
+    book = Book.query.get_or_404(id)
+    return render_template('book.html', book=book)
+
+@app.route('/libview/edit/<int:id>', methods=['GET', 'POST'])
+def edit_book(id):
+    book = Book.query.get_or_404(id)
+    form = BookForm()
+    if form.validate_on_submit():
+        book.title = form.title.data
+        book.author = form.author.data
+        book.synopsis = form.synopsis.data
+        book.available = form.available.data
+
+        db.session.add(book)
+        db.session.commit()
+        flash("Book information has been updated")
+        return redirect(url_for('libview'))
+    form.title.data = book.title
+    form.author.data = book.author
+    form.synopsis.data = book.synopsis
+    form.available.data = book.available
+    return render_template('edit_book.html', form=form)
+
 
 @app.route('/bookadd', methods=['GET', "POST"])
 @login_required
@@ -166,5 +246,9 @@ def add_book():
 
     return render_template("bookadd.html", form=form)
 
+
+#app.route('/borroweradd', methods = ['GET', "POST"])
+#def hello_world():
+    
 
 

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1>Enter the borrower information here</h1> 
+    <br>
+    <div class="shadow w-25 p-3 mb-5 bg-white rounded mx-auto">
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        {{ form.first_name.label(class="form-label") }}
+        {{ form.first_name(class="form-control") }}
+        <br/>
+        {{ form.last_name.label(class="form-label") }}
+        {{ form.last_name(class="form-control") }}
+        <br/>
+        {{ form.email.label(class="form-label") }}
+        {{ form.email(class="form-control") }}
+        <br/>
+        {{ form.apartment_number.label(class="form-label") }}
+        {{ form.apartment_number(class="form-control") }}
+        <br/>
+        {{ form.submit(class="btn btn-primary") }} 
+    </div>
+
+{% endblock %}
