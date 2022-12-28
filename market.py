@@ -74,6 +74,9 @@ class BorrowerForm(FlaskForm):
     apartment_number = StringField("Apartment Number", validators=[DataRequired()])
     submit = SubmitField("Submit")
 
+class SearchForm(FlaskForm):
+    searched = StringField("Searched", validators=[DataRequired()])
+    submit = SubmitField("Submit")
 
 class BookForm(FlaskForm):
     title = StringField("Title", validators=[DataRequired()])
@@ -95,6 +98,24 @@ login_manager.login_view = 'login'
 @login_manager.user_loader
 def load_user(user_id):
     return Users.query.get(int(user_id))
+
+@app.context_processor
+def base():
+    form = SearchForm() 
+    return dict(form=form)
+
+@app.route('/search', methods=["POST"])
+def search():
+    form = SearchForm()
+    books = Book.query
+    if form.validate_on_submit():
+        
+        booklook.searched = form.searched.data
+
+        books = books.filter(Book.title.like('%' + booklook.searched + '%'))
+        books = books.order_by(Book.title).all()
+
+        return render_template("search.html", form=form, searched = booklook.searched, books = books)
 
 @app.route('/u', methods=['GET', 'POST'])
 def add_user():
@@ -161,7 +182,7 @@ def hello_world():
 
     return render_template("borroweradd.html", form=form)
 
-@app.route('/libview/edit/<int:id>', methods=['GET', 'POST'])
+@app.route('/brwrview/edit/<int:id>', methods=['GET', 'POST'])
 def edit_borrower(id):
     borrower = Borrower.query.get_or_404(id)
     form = BorrowerForm()
