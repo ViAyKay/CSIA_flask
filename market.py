@@ -14,9 +14,10 @@ from wtforms.widgets import TextArea
 import os
 from flask_migrate import Migrate
 import uuid as uuid
-from sqlalchemy import func, select
+from sqlalchemy import func
 from sqlalchemy import ForeignKey
 from flask import Flask, session
+from sqlalchemy.sql import text
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:dangerzone@localhost/library'
@@ -74,10 +75,11 @@ class Borrow (db.Model):
     id = db.Column(db.Integer, primary_key=True)
     borrow_date = db.Column(db.Date, default=date.today())
     book_id = db.Column(db.Integer, ForeignKey(Book.id))
+    #book_title = db.Column(db.String(255), ForeignKey(Book.title))
     borrower_id = db.Column (db.Integer, ForeignKey(Borrower.id))
     overdue = db.Column(db.Boolean, nullable = False, default=False)
     daysleft = db.Column(db.Integer, nullable = False, default=7)
-    return_date = db.Column(db.Date, nullable=False) 
+    return_date = db.Column(db.Date, nullable=False, default=date.today() + timedelta(days=20)) 
     
 class BorrowForm(FlaskForm):
     book_id = IntegerField("book id", validators=[DataRequired(), NumberRange(min=1, max=100)])
@@ -124,8 +126,9 @@ def borrowadd():
     max_borrower_id = first_highest_user_id_record()
 
     if form.validate_on_submit():
-        if form.book_id.data < max_book_id and form.borrower_id < max_borrower_id:
-            borrow = Borrow(book_id=form.book_id.data, borrower_id=form.borrower_id.data, return_date= date.today() + timedelta(days=20) )
+        
+        if  db.session.query(Book.id).filter_by(id = form.book_id.data).first() is not None and db.session.query(Borrower.id).filter_by(Borrower.id).first() is not None:
+            borrow = Borrow(book_id=form.book_id.data, borrower_id=form.borrower_id.data)
             #Clear the form
             form.book_id.data = ''
             form.borrower_id.data = '' 
@@ -142,12 +145,14 @@ def borrowadd():
 @app.route('/borrowview', methods=['GET','POST'])
 @login_required
 def borrowview():   
-    #Grab all books from database
+    #Grab all borrows from database
+    todays_date = date.today()
     borrows = Borrow.query.order_by(Borrow.id)
-    return render_template('borrowview.html', borrows = borrows)
-    
-   
+    for borrow in borrows:
+        if (todays_date - borrow.return_date).days > 1:
+            borrow.overdue = True
 
+    return render_template('borrowview.html', borrows = borrows, todays_date=todays_date)
 
 @app.context_processor
 def base():
@@ -178,6 +183,7 @@ def borrowersearch():
             borrowers = borrowers.order_by(Borrower.first_name).all()
 
             return render_template("pplsearch.html", form=form, searched = brwrlook.searched, borrowers = borrowers)
+
 
 
 @app.route('/u', methods=['GET', 'POST'])
