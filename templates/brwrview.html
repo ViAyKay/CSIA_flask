@@ -2,7 +2,17 @@
 
 
 {% block content %}
-    
+
+{% for message in get_flashed_messages() %}
+<div class="alert alert-warning alert-dismissible fade show" role="alert"> 
+  {{ message }}      
+  <button type="button" class="close" data-bs-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+{% endfor %}
+
+   
     <h1>Welcome to borrower view</h1>
     <br>
 
@@ -27,7 +37,8 @@
         <td>{{ borrower.email }}</td>
         <td>{{ borrower.apartment_number }}</td>
         <td>{{ borrower.late_returns }}</td> 
-        <td><a href="{{ url_for('edit_borrower', id=borrower.id) }}" class="btn btn-outline-secondary">Edit Borrower</a></td>      
+        <td><a href="{{ url_for('edit_borrower', id=borrower.id) }}" class="btn btn-outline-secondary">Edit Borrower</a></td>  
+        <td><a href="{{ url_for('brwrdelete', id=borrower.id) }}" class="btn btn-outline-danger">Edit Borrower</a></td>      
       </tr>
       {% endfor %}
         

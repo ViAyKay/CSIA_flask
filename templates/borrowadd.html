@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 
+
 {% block content %}
 
 {% for message in get_flashed_messages() %}
@@ -11,25 +12,21 @@
 </div>
 {% endfor %}
 
-<h1>Enter the book information here</h1> 
+<h1>Enter the borrow information here</h1> 
     <br>
     <div class="shadow w-25 p-3 mb-5 bg-white rounded mx-auto">
     <form method="POST">
         {{ form.hidden_tag() }}
 
-        {{ form.title.label(class="form-label") }}
-        {{ form.title(class="form-control") }}
+        {{ form.book_id.label(class="form-label") }}
+        {{ form.book_id(class="form-control") }}    
         <br/>
-        {{ form.author.label(class="form-label") }}
-        {{ form.author(class="form-control") }}
-        <br/>
-        {{ form.synopsis.label(class="form-label") }}
-        {{ form.synopsis(class="form-control") }}
-        <br/>
-        {{ form.available.label(class="form-label") }}
-        {{ form.available(class="form-check-input") }}
+        {{ form.borrower_id.label(class="form-label") }}
+        {{ form.borrower_id(class="form-control")}}
         <br/>
         {{ form.submit(class="btn btn-primary") }} 
     </div>
-
 {% endblock %}
+  
+
+

@@ -2,6 +2,15 @@
 
 
 {% block content %}
+
+{% for message in get_flashed_messages() %}
+<div class="alert alert-warning alert-dismissible fade show" role="alert"> 
+  {{ message }}      
+  <button type="button" class="close" data-bs-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+{% endfor %}
     
     <h1>Welcome to library view</h1>
     <br>
@@ -29,6 +38,7 @@
         {% endif %}</td>
       <td><a href="{{ url_for('booklook', id=book.id) }}" class="btn btn-outline-secondary">View Book</a></td>
       <td><a href="{{ url_for('edit_book', id=book.id) }}" class="btn btn-outline-secondary">Edit Book</a></td>
+      <td><a href="{{ url_for('delete_book', id=book.id) }}" class="btn btn-outline-danger">Delete Book</a></td>
       </tr>
       {% endfor %}
         

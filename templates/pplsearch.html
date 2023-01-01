@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+<br>
+<h2>You Searched For...</h2>
+<p>{{ searched }}</p>
+<br>
+
+{% for borrower in borrowers %}
+<div class="shadow w-25 p-3 mb-5 bg-white rounded">
+ID:{{ borrower.id }}<br>
+First Name:{{ borrower.first_name }}<br>
+Last Name:{{ borrower.last_name }}<br>
+Email:{{ borrower.email }}<br>
+Apartment Number:{{ borrower.apartment_number }}<br>
+No. of Late Returns:{{ borrower.late_returns }}
+</div>
+
+{% endfor %}
+
+
+    
+{% endblock %}
+  
+
+

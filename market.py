@@ -4,17 +4,19 @@ from flask import Flask, request, render_template, url_for, flash,redirect, url_
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date
 from datetime import datetime
+from datetime import timedelta
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError, EmailField, IntegerField
-from wtforms.validators import DataRequired
+from wtforms.validators import DataRequired, NumberRange
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user 
 from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms.widgets import TextArea
 import os
 from flask_migrate import Migrate
 import uuid as uuid
-
+from sqlalchemy import func, select
 from sqlalchemy import ForeignKey
+from flask import Flask, session
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:dangerzone@localhost/library'
@@ -22,6 +24,17 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 app.config['SECRET_KEY'] = "whatgoesupmustneverstayupforthedevillooksforanomalousbasterds101"
+
+
+def first_highest_book_id_record():
+    result = db.session.query(func.max(Book.id)).scalar()
+    return result
+
+def first_highest_user_id_record():
+    result = db.session.query(func.max(Users.id)).scalar()
+    return result
+
+
 
 class Borrower (db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -42,10 +55,7 @@ class Book (db.Model):
 class  Users(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    #password = db.Column(db.String(100), nullable=False, unique=True)
     superuser = db.Column(db.Boolean, nullable=False)
-    #password_stuff
-    #password = db.Column(db.String(128))
     password_hash = db.Column(db.String(128))
 
 
@@ -62,10 +72,17 @@ class  Users(db.Model, UserMixin):
 
 class Borrow (db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    #date = db.Column(db.Date, default=date.utcnow)
+    borrow_date = db.Column(db.Date, default=date.today())
     book_id = db.Column(db.Integer, ForeignKey(Book.id))
-    borrower_id = db.Column(db.Integer, ForeignKey(Borrower.id))
+    borrower_id = db.Column (db.Integer, ForeignKey(Borrower.id))
+    overdue = db.Column(db.Boolean, nullable = False, default=False)
+    daysleft = db.Column(db.Integer, nullable = False, default=7)
     return_date = db.Column(db.Date, nullable=False) 
+    
+class BorrowForm(FlaskForm):
+    book_id = IntegerField("book id", validators=[DataRequired(), NumberRange(min=1, max=100)])
+    borrower_id = IntegerField("borrower field", validators=[DataRequired(), NumberRange(min=1, max=100)])
+    submit = SubmitField("Submit")
 
 class BorrowerForm(FlaskForm):
     first_name = StringField("First Name", validators=[DataRequired()])
@@ -99,6 +116,39 @@ login_manager.login_view = 'login'
 def load_user(user_id):
     return Users.query.get(int(user_id))
 
+@app.route('/borrowadd', methods=['GET','POST'])
+def borrowadd():
+    form = BorrowForm()
+
+    max_book_id = first_highest_book_id_record()
+    max_borrower_id = first_highest_user_id_record()
+
+    if form.validate_on_submit():
+        if form.book_id.data < max_book_id and form.borrower_id < max_borrower_id:
+            borrow = Borrow(book_id=form.book_id.data, borrower_id=form.borrower_id.data, return_date= date.today() + timedelta(days=20) )
+            #Clear the form
+            form.book_id.data = ''
+            form.borrower_id.data = '' 
+        
+            db.session.add(borrow)
+            db.session.commit() 
+            flash("Borrow added to database successfully")
+
+        else:
+            flash("Please enter valid IDs")
+
+    return render_template("borrowadd.html", form=form)
+
+@app.route('/borrowview', methods=['GET','POST'])
+@login_required
+def borrowview():   
+    #Grab all books from database
+    borrows = Borrow.query.order_by(Borrow.id)
+    return render_template('borrowview.html', borrows = borrows)
+    
+   
+
+
 @app.context_processor
 def base():
     form = SearchForm() 
@@ -116,6 +166,19 @@ def search():
         books = books.order_by(Book.title).all()
 
         return render_template("search.html", form=form, searched = booklook.searched, books = books)
+
+@app.route('/pplsearch', methods=["POST"])
+def borrowersearch():
+    form = SearchForm()
+    borrowers = Borrower.query
+    if form.validate_on_submit():
+
+            brwrlook.searched = form.searched.data
+            borrowers = borrowers.filter(Borrower.first_name.like('%' + brwrlook.searched + '%'))
+            borrowers = borrowers.order_by(Borrower.first_name).all()
+
+            return render_template("pplsearch.html", form=form, searched = brwrlook.searched, borrowers = borrowers)
+
 
 @app.route('/u', methods=['GET', 'POST'])
 def add_user():
@@ -174,7 +237,7 @@ def hello_world():
         form.email.data = ''
         form.apartment_number.data = ''
 
-        #Add post data to database
+        #Add borrower data to database
         db.session.add(borrower)
         db.session.commit()
 
@@ -209,9 +272,36 @@ def brwrview():
     borrowers = Borrower.query.order_by(Borrower.id)
     return render_template('brwrview.html', borrowers = borrowers)
 
+@app.route('/brwrview/<int:id>', methods=['GET', 'POST'])
+@login_required
+def brwrlook():
+    borrower = Borrower.query.get_or_404(id)
+
+@app.route('/brwrview/delete/<int:id>', methods=['GET', 'POST'])
+@login_required
+def brwrdelete(id):
+    borrower_to_delete = Borrower.query.get_or_404(id)
+
+    try:
+        db.session.delete(borrower_to_delete)
+        db.session.commit()
+
+        flash("Borrower was deleted from database ")
+
+        borrowers = Borrower.query.order_by(Borrower.id)
+        return render_template('brwrview.html', borrowers = borrowers)
+
+    except:
+        flash("Error deleting borrower")
+
+
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('error.html'), 404
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('500.html'), 500
 
 @app.route('/libview', methods=['GET', 'POST'])
 @login_required
@@ -244,6 +334,23 @@ def edit_book(id):
     form.synopsis.data = book.synopsis
     form.available.data = book.available
     return render_template('edit_book.html', form=form)
+    
+@app.route('/libview/delete/<int:id>')
+def delete_book(id):
+    book_to_delete = Book.query.get_or_404(id)
+
+    try:
+        db.session.delete(book_to_delete)
+        db.session.commit()
+
+        flash("Book was deleted from database ")
+
+        books = Book.query.order_by(Book.id)
+        return render_template('libview.html', books = books)
+
+    except:
+        flash("Error deleting book")
+
 
 
 @app.route('/bookadd', methods=['GET', "POST"])
