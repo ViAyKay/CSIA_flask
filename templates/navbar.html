@@ -7,16 +7,16 @@
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav mr-auto">
         <li class="nav-item active">
-          <a class="nav-link" href="{{ url_for('libview') }}">Libview<span class="sr-only"></span></a>
+          <a class="nav-link" href="{{ url_for('bookview') }}">Books<span class="sr-only"></span></a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('add_book') }}">Book Add</a>
+          <a class="nav-link" href="{{ url_for('add_book') }}">Add Book</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('brwrview') }}">Borrower View</a>
+            <a class="nav-link" href="{{ url_for('borrowerview') }}">View Borrowers</a>
           </li>
         <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('hello_world') }}">Borrower Add</a>
+            <a class="nav-link" href="{{ url_for('borroweradd') }}">Borrower Add</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('borrowview') }}">Borrow View</a>
@@ -26,7 +26,7 @@
           </li>
           
       </ul>
-      <form method="POST" action="{{url_for('search')}}" class="form-inline my-2 my-lg-0">
+      <form method="POST" action="{{url_for('booksearch')}}" class="form-inline my-2 my-lg-0">
         {{ form.hidden_tag() }}
         <input class="form-control mr-sm-2" type="search" placeholder="Enter Book Title" aria-label="Search",   name="searched">
         <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search Book</button>

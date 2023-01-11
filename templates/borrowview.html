@@ -17,8 +17,8 @@
     <br>     
       {% for borrow in borrows %}
       <div class="shadow w-25 p-3 mb-5 bg-white rounded">
-        <p>Book ID: <a href="{{ url_for('booklook', id=borrow.book_id) }}">{{ borrow.book_id }}</a></p>
-        <p>Borrower ID: <a href="{{ url_for('brwrlook', id=borrow.borrower_id) }}">{{ borrow.borrower_id }}</a></p>
+        <p>Book ID: <a href="{{ url_for('viewbook', id=borrow.book_id) }}">{{ borrow.book_id }}</a></p>
+        <p>Borrower ID: <a href="{{ url_for('borrowerlook', id=borrow.borrower_id) }}">{{ borrow.borrower_id }}</a></p>
         <p>Borrow Date: {{ borrow.borrow_date }}</p>
         <p>Return Date: {{ borrow.return_date }}</p>
         <p>Status: {% if borrow.overdue %}

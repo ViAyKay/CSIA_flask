@@ -9,7 +9,7 @@
 
 {% for book in books %}
 <div class="shadow w-25 p-3 mb-5 bg-white rounded">
-<a href="{{ url_for('booklook', id=book.id) }}">{{book.title}}</a></div>
+<a href="{{ url_for('viewbook', id=book.id) }}">{{book.title}}</a></div>
 
 {% endfor %}
 
