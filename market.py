@@ -233,6 +233,9 @@ def borroweradd():
         db.session.commit()
 
         flash("Borrower added to database successfully")
+    else:
+        flash("Please enter valid information")
+
 
     return render_template("borroweradd.html", form=form)
 
@@ -317,12 +320,12 @@ def borrowadd():
         
         if  db.session.query(Book.id).filter_by(id = form.book_id.data).first() is not None and db.session.query(Borrower.id).filter_by(id = form.borrower_id.data).first() is not None:
             
-            monka = Book.query.filter_by(id = form.book_id.data).first()
-            if monka.available != False:      
+            book_in_borrow = Book.query.filter_by(id = form.book_id.data).first()
+            if book_in_borrow.available != False:      
                 borrow = Borrow(book_id=form.book_id.data, borrower_id=form.borrower_id.data)
                 #Clear the form  
                 update(Book).where(Book.id == form.book_id.data).values(available=False)
-                monka.available = False
+                book_in_borrow.available = False
                 form.book_id.data = ''
                 form.borrower_id.data = '' 
                
