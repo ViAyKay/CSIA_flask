@@ -215,7 +215,7 @@ def booksearch():
 #Borrowers
 
 #Add borrower
-@app.route('/borroweradd', methods=['GET', 'POST'])
+@app.route('/borroweradd', methods=['GET', "POST"])
 @login_required
 def borroweradd():
     form = BorrowerForm()
