@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+
+    <br>     
+        <p>ID Number: {{ borrower.id }}</p>       
+        <p>First Name: {{ borrower.first_name }}</p>
+        <p>Last Name: {{ borrower.last_name }}</p>
+        <p>Email: {{ borrower.email }}</p>
+        <p>Apartment Number: {{ borrower.apartment_number }}</p>
+        <p>Number of Late Returns: {{ borrower.late_returns }}</p>
+        
+{% endblock %}

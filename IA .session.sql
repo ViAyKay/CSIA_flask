@@ -1,2 +1,3 @@
-ALTER TABLE borrower
- DROP COLUMN last_Name;
+UPDATE book
+SET available = False
+WHERE id = 6

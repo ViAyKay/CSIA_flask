@@ -38,7 +38,7 @@
         <td>{{ borrower.apartment_number }}</td>
         <td>{{ borrower.late_returns }}</td> 
         <td><a href="{{ url_for('edit_borrower', id=borrower.id) }}" class="btn btn-outline-secondary">Edit Borrower</a></td>  
-        <td><a href="{{ url_for('brwrdelete', id=borrower.id) }}" class="btn btn-outline-danger">Edit Borrower</a></td>      
+        <td><a href="{{ url_for('brwrdelete', id=borrower.id) }}" class="btn btn-outline-danger">Delete Borrower</a></td>      
       </tr>
       {% endfor %}
         

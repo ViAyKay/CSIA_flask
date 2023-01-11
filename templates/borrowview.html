@@ -15,15 +15,24 @@
    
     <h1>List of borrows</h1>
     <br>     
-      {% for borrower in borrowers %}
-      <div class="shadow w-25 p-3 mb-5 bg-white rounded mx-auto">
-        
-
+      {% for borrow in borrows %}
+      <div class="shadow w-25 p-3 mb-5 bg-white rounded">
+        <p>Book ID: <a href="{{ url_for('booklook', id=borrow.book_id) }}">{{ borrow.book_id }}</a></p>
+        <p>Borrower ID: <a href="{{ url_for('brwrlook', id=borrow.borrower_id) }}">{{ borrow.borrower_id }}</a></p>
+        <p>Borrow Date: {{ borrow.borrow_date }}</p>
+        <p>Return Date: {{ borrow.return_date }}</p>
+        <p>Status: {% if borrow.overdue %}
+            Overdue
+            {% else %}
+            Not Overdue
+            {% endif %}
+        </p>
+        <p><a href="{{ url_for('returnbook', id=borrow.id) }}" class="btn btn-outline-danger">Confirm Return</a></p>
       </div>
  
       {% endfor %}
+      <br>
+      {{ todays_date }}
         
-
-
 {% endblock %}
   

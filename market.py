@@ -7,14 +7,14 @@ from datetime import datetime
 from datetime import timedelta
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError, EmailField, IntegerField
-from wtforms.validators import DataRequired, NumberRange
+from wtforms.validators import DataRequired, NumberRange, Email
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user 
 from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms.widgets import TextArea
 import os
 from flask_migrate import Migrate
 import uuid as uuid
-from sqlalchemy import func
+from sqlalchemy import func, update
 from sqlalchemy import ForeignKey
 from flask import Flask, session
 from sqlalchemy.sql import text
@@ -77,6 +77,7 @@ class Borrow (db.Model):
     book_id = db.Column(db.Integer, ForeignKey(Book.id))
     #book_title = db.Column(db.String(255), ForeignKey(Book.title))
     borrower_id = db.Column (db.Integer, ForeignKey(Borrower.id))
+    #borrower_first_name 
     overdue = db.Column(db.Boolean, nullable = False, default=False)
     daysleft = db.Column(db.Integer, nullable = False, default=7)
     return_date = db.Column(db.Date, nullable=False, default=date.today() + timedelta(days=20)) 
@@ -89,7 +90,7 @@ class BorrowForm(FlaskForm):
 class BorrowerForm(FlaskForm):
     first_name = StringField("First Name", validators=[DataRequired()])
     last_name = StringField("Last Name", validators=[DataRequired()])
-    email = EmailField("Email", validators=[DataRequired()], widget=TextArea())
+    email = EmailField("Email", validators=[DataRequired(),Email("Enter a valid email address")], widget=TextArea() )
     apartment_number = StringField("Apartment Number", validators=[DataRequired()])
     submit = SubmitField("Submit")
 
@@ -127,20 +128,73 @@ def borrowadd():
 
     if form.validate_on_submit():
         
-        if  db.session.query(Book.id).filter_by(id = form.book_id.data).first() is not None and db.session.query(Borrower.id).filter_by(Borrower.id).first() is not None:
-            borrow = Borrow(book_id=form.book_id.data, borrower_id=form.borrower_id.data)
-            #Clear the form
-            form.book_id.data = ''
-            form.borrower_id.data = '' 
-        
-            db.session.add(borrow)
-            db.session.commit() 
-            flash("Borrow added to database successfully")
+        if  db.session.query(Book.id).filter_by(id = form.book_id.data).first() is not None and db.session.query(Borrower.id).filter_by(id = form.borrower_id.data).first() is not None:
+            
+            monka = Book.query.filter_by(id = form.book_id.data).first()
+            if monka.available != False:      
+                borrow = Borrow(book_id=form.book_id.data, borrower_id=form.borrower_id.data)
+                #Clear the form  
+                update(Book).where(Book.id == form.book_id.data).values(available=False)
+                monka.available = False
+                form.book_id.data = ''
+                form.borrower_id.data = '' 
+               
+                db.session.add(borrow)
+                db.session.commit() 
+                flash("Borrow added to database successfully")
+
+            else:
+                flash("Book is not available")
 
         else:
             flash("Please enter valid IDs")
 
     return render_template("borrowadd.html", form=form)
+
+@app.route('/borrowview/return/<int:id>', methods=['GET','POST'])
+def returnbook(id):
+    borrow_to_confirm = Borrow.query.get_or_404(id)
+    borrowed_book = Book.query.filter_by(id = borrow_to_confirm.book_id).first()
+    borrower_in_borrow = Borrower.query.filter_by(id = borrow_to_confirm.borrower_id).first()
+
+    try:
+        if borrow_to_confirm.overdue == False:
+            borrowed_book.available = True
+            db.session.delete(borrow_to_confirm)
+
+            db.session.commit()
+
+            flash("Return Successful")
+
+            todays_date = date.today()
+            borrows = Borrow.query.order_by(Borrow.id)
+            for borrow in borrows:
+                if (todays_date - borrow.return_date).days > 1:
+                    borrow.overdue = True
+
+            return render_template('borrowview.html', borrows = borrows, todays_date=todays_date)
+
+        else:
+            borrowed_book.available = True
+            borrower_in_borrow.late_returns = borrower_in_borrow.late_returns + 1
+            db.session.delete(borrow_to_confirm)
+
+            db.session.commit()
+
+            flash("Return Successful, Late returns updated")
+
+            todays_date = date.today()
+            borrows = Borrow.query.order_by(Borrow.id)
+            for borrow in borrows:
+                if (todays_date - borrow.return_date).days > 1:
+                    borrow.overdue = True
+
+            return render_template('borrowview.html', borrows = borrows, todays_date=todays_date)
+
+    except:
+
+        flash("An error occured")
+
 
 @app.route('/borrowview', methods=['GET','POST'])
 @login_required
@@ -260,6 +314,7 @@ def edit_borrower(id):
         borrower.last_name = form.last_name.data
         borrower.email = form.email.data
         borrower.apartment_number = form.apartment_number.data
+        
 
         db.session.add(borrower)
         db.session.commit()
@@ -280,8 +335,9 @@ def brwrview():
 
 @app.route('/brwrview/<int:id>', methods=['GET', 'POST'])
 @login_required
-def brwrlook():
+def brwrlook(id):
     borrower = Borrower.query.get_or_404(id)
+    return render_template('brwrlook.html', borrower=borrower)
 
 @app.route('/brwrview/delete/<int:id>', methods=['GET', 'POST'])
 @login_required
