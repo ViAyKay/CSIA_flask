@@ -15,6 +15,8 @@ class BorrowerForm(FlaskForm):
     last_name = StringField("Last Name", validators=[DataRequired()])
     email = EmailField("Email", validators=[DataRequired(), Email("Enter a valid email address")], widget=TextArea() )
     apartment_number = StringField("Apartment Number", validators=[DataRequired()])
+    password_hash = PasswordField("Password", validators=[DataRequired()])
+    verify_password_hash = PasswordField("Re-enter Password", validators=[DataRequired()])
     submit = SubmitField("Submit")
 
 #Form to search books or borrowers
@@ -33,11 +35,17 @@ class BookForm(FlaskForm):
 #Form to add user
 class UserForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired()])
+    email = EmailField("Email", validators=[DataRequired(), Email("Enter a valid email address")], widget=TextArea() )
     password_hash = PasswordField("Password", validators=[DataRequired()])
     submit = SubmitField("Submit")
 
 #Form used for login
 class LoginForm(FlaskForm):
-    name = StringField("Username", validators=[DataRequired()])
+    email = EmailField("Email", validators=[DataRequired(), Email("Enter a valid email address")], widget=TextArea() )
     password = PasswordField("Password", validators=[DataRequired()])
     submit = SubmitField("Log In")
+
+#Form for choice of login
+class LoginChoiceForm(FlaskForm):
+    librarian_login = SubmitField("Librarian Login")
+    borrower_login = SubmitField("Reader Login") 

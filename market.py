@@ -31,6 +31,8 @@ class Borrower (db.Model):
     email = db.Column(db.String(120), nullable=False)
     apartment_number = db.Column(db.String(255), nullable = False)
     late_returns = db.Column(db.Integer, nullable = False, default=0)
+    superuser = db.Column(db.Boolean, nullable=False, default=False)
+    password_hash = db.Column(db.String(128), nullable=False)
 
 #Book Model
 class Book (db.Model):
@@ -44,9 +46,10 @@ class Book (db.Model):
 #User Model
 class  Users(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    superuser = db.Column(db.Boolean, nullable=False)
-    password_hash = db.Column(db.String(128))
+    name = db.Column(db.String(255), nullable=False)
+    email = db.Column(db.String(120), nullable=False)
+    superuser = db.Column(db.Boolean, nullable=False, default=True)
+    password_hash = db.Column(db.String(128), nullable=False)
 
 #Borrow Model
 class Borrow (db.Model):
@@ -84,8 +87,67 @@ login_manager.login_view = 'login'
 def load_user(user_id):
     return Users.query.get(int(user_id))
 
-#Login page
+#Login choice page
 @app.route('/', methods=['GET', 'POST'])
+def loginchoice(): 
+    return render_template('loginchoicepage.html')
+
+#Borrower login page
+@app.route('/readerlogin', methods=['GET', 'POST'])
+def readerlogin():
+    form = LoginForm()
+    if form.validate_on_submit():
+        borrower = Borrower.query.filter_by(name=form.name.data).first()
+        if borrower:
+            #check hash
+            if check_password_hash(borrower.password_hash, form.password.data):
+                login_user(borrower)
+                return redirect(url_for('readerview'))
+            else:
+                flash("WRONG PASSWORD TRY AGAIN") 
+        else:
+            flash("USER DOES NOT EXIST")
+    return render_template('readerlogin.html')
+
+#Testing
+@app.route('/readerview')
+def readerview():
+    return render_template("404.html")
+    
+#Reader registeration
+@app.route('/register', methods=['GET', "POST"])
+def borroweradd():
+    form = BorrowerForm()
+    if form.validate_on_submit():
+        borrower = Borrower.query.filter_by(email=form.email.data).first()
+        if borrower is None:
+            if form.password_hash.data == form.verify_password_hash.data:
+                hashed_pw = generate_password_hash(form.password_hash.data, "sha256")
+                borrower = Borrower(first_name=form.first_name.data, last_name=form.last_name.data, email=form.email.data, apartment_number=form.apartment_number.data, password_hash=hashed_pw)
+            
+                form.first_name.data = ''
+                form.last_name.data = ''
+                form.email.data = ''
+                form.apartment_number.data = ''
+                form.password_hash.data = ''
+
+                #Add borrower data to database
+                db.session.add(borrower)
+                db.session.commit()
+            else:
+                flash("Passwords do not match")
+
+
+        flash("Borrower added to database successfully")
+    else:
+        flash("Please enter valid information")
+
+
+    return render_template("registeration.html", form=form)
+
+
+#Librarian Login page
+@app.route('/librarianlogin', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if form.validate_on_submit():
@@ -100,7 +162,7 @@ def login():
         else:
             flash("USER DOES NOT EXIST")
 
-    return render_template('loginpage.html', form=form)
+    return render_template('librarianlogin.html', form=form)
 
 #Adding User
 @app.route('/adduser', methods=['GET', 'POST'])
@@ -109,17 +171,18 @@ def add_user():
     form = UserForm()
     #Hashing Password
     if form.validate_on_submit():
-        user = Users.query.filter_by(name=form.name.data).first()
+        user = Users.query.filter_by(email=form.email.data).first()
         if user is None:
             hashed_pw = generate_password_hash(form.password_hash.data, "sha256")
-            user = Users(name=form.name.data,superuser = True, password_hash=hashed_pw)
+            user = Users(email=form.email.data, name=form.name.data, password_hash=hashed_pw)
             db.session.add(user)
             db.session.commit()
         name = form.name.data
         form.name.data = ''
+        form.email.data = ''
         form.password_hash.data = ''
     
-    return render_template ( "adduser.html", form=form, name=name)
+    return render_template ( "adduser.html", form=form)
 
 #Books
 
@@ -155,12 +218,14 @@ def bookview():
 
 #View book details
 @app.route('/books/<int:id>')
+@login_required
 def viewbook(id):
     book = Book.query.get_or_404(id)
     return render_template('book.html', book=book)
 
 #Edit book details
 @app.route('/books/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
 def edit_book(id):
     book = Book.query.get_or_404(id)
     form = BookForm()
@@ -182,6 +247,7 @@ def edit_book(id):
 
  #Delete book   
 @app.route('/books/delete/<int:id>')
+@login_required
 def delete_book(id):
     book_to_delete = Book.query.get_or_404(id)
 
@@ -192,13 +258,14 @@ def delete_book(id):
         flash("Book was deleted from database ")
 
         books = Book.query.order_by(Book.id)
-        return render_template('books.html', books = books)
+        return render_template('bookview.html', books = books)
 
     except:
         flash("Error deleting book")
 
 #Search for books
 @app.route('/booksearch', methods=["POST"])
+@login_required
 def booksearch():
     form = SearchForm()
     books = Book.query
@@ -211,32 +278,8 @@ def booksearch():
 
         return render_template("booksearch.html", form=form, searched = viewbook.searched, books = books)
 
+
 #Borrowers
-
-#Add borrower
-@app.route('/borroweradd', methods=['GET', "POST"])
-@login_required
-def borroweradd():
-    form = BorrowerForm()
-
-    if form.validate_on_submit():
-        borrower = Borrower(first_name=form.first_name.data, last_name=form.last_name.data, email=form.email.data, apartment_number=form.apartment_number.data)
-        #Clear the form
-        form.first_name.data = ''
-        form.last_name.data = ''
-        form.email.data = ''
-        form.apartment_number.data = ''
-
-        #Add borrower data to database
-        db.session.add(borrower)
-        db.session.commit()
-
-        flash("Borrower added to database successfully")
-    else:
-        flash("Please enter valid information")
-
-
-    return render_template("borroweradd.html", form=form)
 
 #View list of borrowers
 @app.route('/borrowerview', methods=['GET', 'POST'])
@@ -248,6 +291,7 @@ def borrowerview():
 
 #Edit borrower details
 @app.route('/borrowerview/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
 def edit_borrower(id):
     borrower = Borrower.query.get_or_404(id)
     form = BorrowerForm()
@@ -295,6 +339,7 @@ def borrowerdelete(id):
 
 #Search for borrows
 @app.route('/borrowersearch', methods=["POST"])
+@login_required
 def borrowersearch():
     form = SearchForm()
     borrowers = Borrower.query
@@ -312,6 +357,7 @@ def borrowersearch():
 
 #Create a borrow
 @app.route('/borrowadd', methods=['GET','POST'])
+@login_required
 def borrowadd():
     form = BorrowForm()
 
@@ -342,6 +388,7 @@ def borrowadd():
 
 #Return a book 
 @app.route('/borrowview/return/<int:id>', methods=['GET','POST'])
+@login_required
 def returnbook(id):
     borrow_to_confirm = Borrow.query.get_or_404(id)
     borrowed_book = Book.query.filter_by(id = borrow_to_confirm.book_id).first()

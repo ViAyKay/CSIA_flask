@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+
+<div style="background-image: url('https://mdbootstrap.com/img/Photos/Others/images/76.jpg');
+height: 100vh">
+
+{% for message in get_flashed_messages() %}
+<div class="alert alert-warning alert-dismissible fade show" role="alert"> 
+  {{ message }}      
+  <button type="button" class="close" data-bs-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+{% endfor %}
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" contents="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"> 
+      </head> 
+    <br>
+    <br>
+    
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <div class="shadow-lg w-25 p-3 mb-5 bg-white rounded mx-auto">
+    <h3 style="text-align: center;">Sign in</h3>
+    <br>
+    <p style="text-align: center;">Which type of account do you want sign in to?</p>
+    <br>
+    <div>
+    <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg btn-block">Librarian</a>
+    <br>
+    <a href="{{ url_for('readerlogin') }}" class="btn btn-primary btn-lg btn-block">Reader</a>
+    </div> 
+    <p style="text-align: center;">--------------------------------------------------------------------</p>
+    <h4>Are you a reader without an account? Click <a href="{{ url_for('borroweradd') }}">here</a> to create one!</h4>
+
+    </div>
+</html>
+
