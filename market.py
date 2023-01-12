@@ -123,7 +123,6 @@ def add_user():
 
 #Books
 
-
 #Add book
 @app.route('/bookadd', methods=['GET', "POST"])
 @login_required
