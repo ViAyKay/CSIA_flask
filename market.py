@@ -383,6 +383,8 @@ def borrowerdelete(id):
 @app.route('/myborrows')
 @login_required
 def myborrows():
+
+    print(current_user.superuser)
     #reader = current_user.id
     myborrows = Borrow.query.filter(Borrow.borrower_id == current_user.id).all()
     return render_template('myborrows.html', myborrows = myborrows, current_user = current_user.id)
@@ -395,6 +397,8 @@ def myborrows():
 @login_required
 def borrowadd():
     form = BorrowForm()
+
+    print(current_user.superuser)
 
     if form.validate_on_submit():
         

@@ -2,7 +2,7 @@
 
 
 {% block content %}
-
+<div class="shadow-lg w-25 p-3 mb-5 bg-white rounded mx-auto">
     <h1>{{ book.title }}</h1>
     <br>     
         <p>ID Number: {{ book.id }}</p>       
@@ -16,5 +16,6 @@
         
         <a href="{{ url_for('edit_book', id=book.id) }}" class="btn btn-outline-secondary">Edit Book</a>
         <a href="{{ url_for('delete_book', id=book.id) }}" class="btn btn-outline-danger">Delete Book</a>
+</div>
 
 {% endblock %}

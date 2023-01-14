@@ -6,7 +6,7 @@ from wtforms.widgets import TextArea
 #Form for adding new borrower
 class BorrowForm(FlaskForm):
     book_id = IntegerField("book id", validators=[DataRequired(), NumberRange(min=1, max=100)])
-    borrower_id = IntegerField("borrower field", validators=[DataRequired(), NumberRange(min=1, max=100)])
+    borrower_id = IntegerField("borrower id", validators=[DataRequired(), NumberRange(min=1, max=100)])
     submit = SubmitField("Submit")
 
 #Form for adding borrower
