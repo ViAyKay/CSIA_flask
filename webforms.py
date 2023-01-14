@@ -14,7 +14,6 @@ class BorrowerForm(FlaskForm):
     first_name = StringField("First Name", validators=[DataRequired()])
     last_name = StringField("Last Name", validators=[DataRequired()])
     email = EmailField("Email", validators=[DataRequired(), Email("Enter a valid email address")], widget=TextArea() )
-    apartment_number = StringField("Apartment Number", validators=[DataRequired()])
     password_hash = PasswordField("Password", validators=[DataRequired()])
     verify_password_hash = PasswordField("Re-enter Password", validators=[DataRequired()])
     submit = SubmitField("Submit")
@@ -41,7 +40,7 @@ class UserForm(FlaskForm):
 
 #Form used for login
 class LoginForm(FlaskForm):
-    email = EmailField("Email", validators=[DataRequired(), Email("Enter a valid email address")], widget=TextArea() )
+    email = EmailField("Email", validators=[DataRequired(), Email("Enter a valid email address")])
     password = PasswordField("Password", validators=[DataRequired()])
     submit = SubmitField("Log In")
 

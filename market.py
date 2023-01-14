@@ -20,19 +20,37 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 app.config['SECRET_KEY'] = "whatgoesupmustneverstayupforthedevillooksforanomalousbasterds101"
 
+#Login, Authenitcation and Registeration
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+
+@login_manager.user_loader
+def load_user(user_id):  
+    return Users.query.get(int(user_id)) or Borrower.query.get(int(user_id))
+
+
+#Searching
+@app.context_processor
+def base():
+    form = SearchForm() 
+    return dict(form=form)
 
 #Models
 
 #Borrower Model
-class Borrower (db.Model):
+class Borrower (db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(255), nullable=False)
     last_name = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(120), nullable=False)
-    apartment_number = db.Column(db.String(255), nullable = False)
     late_returns = db.Column(db.Integer, nullable = False, default=0)
     superuser = db.Column(db.Boolean, nullable=False, default=False)
     password_hash = db.Column(db.String(128), nullable=False)
+    #Backref
+    borrow = db.relationship('Borrow', backref='borrower')
+
 
 #Book Model
 class Book (db.Model):
@@ -42,6 +60,9 @@ class Book (db.Model):
     synopsis = db.Column(db.Text, nullable=True)
     cover_image = db.Column(db.BLOB, nullable=True)
     available = db.Column(db.Boolean, nullable=False, default=True)
+    #Backref
+    borrow = db.relationship('Borrow', backref='book')
+
 
 #User Model
 class  Users(db.Model, UserMixin):
@@ -50,16 +71,6 @@ class  Users(db.Model, UserMixin):
     email = db.Column(db.String(120), nullable=False)
     superuser = db.Column(db.Boolean, nullable=False, default=True)
     password_hash = db.Column(db.String(128), nullable=False)
-
-#Borrow Model
-class Borrow (db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    borrow_date = db.Column(db.Date, default=date.today())
-    book_id = db.Column(db.Integer, ForeignKey(Book.id))
-    borrower_id = db.Column (db.Integer, ForeignKey(Borrower.id))
-    overdue = db.Column(db.Boolean, nullable = False, default=False)
-    daysleft = db.Column(db.Integer, nullable = False, default=7)
-    return_date = db.Column(db.Date, nullable=False, default=date.today() + timedelta(days=20)) 
 
     @property
     def password(self):
@@ -72,20 +83,18 @@ class Borrow (db.Model):
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-#Searching
-@app.context_processor
-def base():
-    form = SearchForm() 
-    return dict(form=form)
 
-#Login, Authenitcation and Registeration
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
+#Borrow Model
+class Borrow (db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    borrow_date = db.Column(db.Date, default=date.today())
+    book_id = db.Column(db.Integer, ForeignKey(Book.id))
+    borrower_id = db.Column (db.Integer, ForeignKey(Borrower.id))
+    overdue = db.Column(db.Boolean, nullable = False, default=False)
+    daysleft = db.Column(db.Integer, nullable = False, default=7)
+    return_date = db.Column(db.Date, nullable=False, default=date.today() + timedelta(days=20))
+    returned = db.Column(db.Boolean, nullable=True, default=False) 
 
-@login_manager.user_loader
-def load_user(user_id):
-    return Users.query.get(int(user_id))
 
 #Login choice page
 @app.route('/', methods=['GET', 'POST'])
@@ -97,23 +106,20 @@ def loginchoice():
 def readerlogin():
     form = LoginForm()
     if form.validate_on_submit():
-        borrower = Borrower.query.filter_by(name=form.name.data).first()
+        borrower = Borrower.query.filter_by(email=form.email.data).first()
         if borrower:
             #check hash
             if check_password_hash(borrower.password_hash, form.password.data):
                 login_user(borrower)
-                return redirect(url_for('readerview'))
+                return redirect(url_for('readerbookview'))
             else:
                 flash("WRONG PASSWORD TRY AGAIN") 
         else:
             flash("USER DOES NOT EXIST")
-    return render_template('readerlogin.html')
 
-#Testing
-@app.route('/readerview')
-def readerview():
-    return render_template("404.html")
-    
+    return render_template('librarianlogin.html', form=form)
+
+
 #Reader registeration
 @app.route('/register', methods=['GET', "POST"])
 def borroweradd():
@@ -123,12 +129,11 @@ def borroweradd():
         if borrower is None:
             if form.password_hash.data == form.verify_password_hash.data:
                 hashed_pw = generate_password_hash(form.password_hash.data, "sha256")
-                borrower = Borrower(first_name=form.first_name.data, last_name=form.last_name.data, email=form.email.data, apartment_number=form.apartment_number.data, password_hash=hashed_pw)
+                borrower = Borrower(first_name=form.first_name.data, last_name=form.last_name.data, email=form.email.data,password_hash=hashed_pw)
             
                 form.first_name.data = ''
                 form.last_name.data = ''
                 form.email.data = ''
-                form.apartment_number.data = ''
                 form.password_hash.data = ''
 
                 #Add borrower data to database
@@ -139,6 +144,7 @@ def borroweradd():
 
 
         flash("Borrower added to database successfully")
+        return redirect(url_for('loginchoice'))
     else:
         flash("Please enter valid information")
 
@@ -151,7 +157,7 @@ def borroweradd():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        user = Users.query.filter_by(name=form.name.data).first()
+        user = Users.query.filter_by(email=form.email.data).first()
         if user:
             #check hash
             if check_password_hash(user.password_hash, form.password.data):
@@ -183,6 +189,13 @@ def add_user():
         form.password_hash.data = ''
     
     return render_template ( "adduser.html", form=form)
+
+@app.route('/logout', methods=['GET', 'POST'])
+@login_required
+def logout():
+    logout_user()
+    flash("You have been logged out")
+    return redirect(url_for('loginchoice'))
 
 #Books
 
@@ -216,12 +229,19 @@ def bookview():
     books = Book.query.order_by(Book.id)
     return render_template('bookview.html', books = books)
 
-#View book details
+#View book details for librarian 
 @app.route('/books/<int:id>')
 @login_required
 def viewbook(id):
     book = Book.query.get_or_404(id)
     return render_template('book.html', book=book)
+
+#View book details for reader
+@app.route('/readerbooks/<int:id>')
+@login_required
+def readerbook(id):
+    book = Book.query.get_or_404(id)
+    return render_template('readerbook.html', book=book)
 
 #Edit book details
 @app.route('/books/edit/<int:id>', methods=['GET', 'POST'])
@@ -245,7 +265,7 @@ def edit_book(id):
     form.available.data = book.available
     return render_template('edit_book.html', form=form)
 
- #Delete book   
+#Delete book   
 @app.route('/books/delete/<int:id>')
 @login_required
 def delete_book(id):
@@ -269,15 +289,39 @@ def delete_book(id):
 def booksearch():
     form = SearchForm()
     books = Book.query
-    if form.validate_on_submit():
+
+    if form.validate_on_submit(): #If user is librarian 
         
         viewbook.searched = form.searched.data
 
         books = books.filter(Book.title.like('%' + viewbook.searched + '%'))
         books = books.order_by(Book.title).all()
-
+     
         return render_template("booksearch.html", form=form, searched = viewbook.searched, books = books)
 
+@app.route('/readerbooksearch', methods=["POST"])
+@login_required
+def readerbooksearch():
+    form = SearchForm()
+    books = Book.query
+
+    if form.validate_on_submit(): #If user is librarian 
+        
+        viewbook.searched = form.searched.data
+
+        books = books.filter(Book.title.like('%' + viewbook.searched + '%'))
+        books = books.order_by(Book.title).all()
+     
+        return render_template("readerbooksearch.html", form=form, searched = viewbook.searched, books = books)
+
+
+#Reader book view
+@app.route('/readerbookview', methods=['GET', 'POST'])
+@login_required
+def readerbookview():
+        #Grab all books from database
+    books = Book.query.order_by(Book.id)
+    return render_template('readerbookview.html', books = books)
 
 #Borrowers
 
@@ -299,7 +343,6 @@ def edit_borrower(id):
         borrower.first_name = form.first_name.data
         borrower.last_name = form.last_name.data
         borrower.email = form.email.data
-        borrower.apartment_number = form.apartment_number.data
         
 
         db.session.add(borrower)
@@ -309,7 +352,6 @@ def edit_borrower(id):
     form.first_name.data = borrower.first_name
     form.last_name.data = borrower.last_name
     form.email.data = borrower.email
-    form.apartment_number.data = borrower.apartment_number
     return render_template('edit_borrower.html', form=form)
 
 #View borrower details
@@ -337,20 +379,13 @@ def borrowerdelete(id):
     except:
         flash("Error deleting borrower")
 
-#Search for borrows
-@app.route('/borrowersearch', methods=["POST"])
+#View your borrows
+@app.route('/myborrows')
 @login_required
-def borrowersearch():
-    form = SearchForm()
-    borrowers = Borrower.query
-    if form.validate_on_submit():
-
-            borrowerlook.searched = form.searched.data
-            borrowers = borrowers.filter(Borrower.first_name.like('%' + borrowerlook.searched + '%'))
-            borrowers = borrowers.order_by(Borrower.first_name).all()
-
-            return render_template("borrowersearch.html", form=form, searched = borrowerlook.searched, borrowers = borrowers)
-
+def myborrows():
+    #reader = current_user.id
+    myborrows = Borrow.query.filter(Borrow.borrower_id == current_user.id).all()
+    return render_template('myborrows.html', myborrows = myborrows, current_user = current_user.id)
 
 
 #Borrows
@@ -397,7 +432,7 @@ def returnbook(id):
     try:
         if borrow_to_confirm.overdue == False:
             borrowed_book.available = True
-            db.session.delete(borrow_to_confirm)
+            borrow_to_confirm.returned = True
 
             db.session.commit()
 
@@ -414,7 +449,7 @@ def returnbook(id):
         else:
             borrowed_book.available = True
             borrower_in_borrow.late_returns = borrower_in_borrow.late_returns + 1
-            db.session.delete(borrow_to_confirm)
+            borrow_to_confirm.returned = True
 
             db.session.commit()
 
@@ -444,6 +479,7 @@ def borrowview():
             borrow.overdue = True
 
     return render_template('borrowview.html', borrows = borrows, todays_date=todays_date)
+
 
 #Error Handling
 @app.errorhandler(404)

@@ -1,0 +1,17 @@
+{% extends 'readerbase.html' %}
+
+
+{% block content %}
+
+    <h1>{{ book.title }}</h1>
+    <br>     
+        <p>ID Number: {{ book.id }}</p>       
+        <p>Author: {{ book.author }}</p>
+        <p>Synopsis: {{ book.synopsis }}</p>
+        <p>Currently {% if book.available %}
+          Available
+        {% else %}
+          Not Available
+        {% endif %}</p>
+        
+{% endblock %}

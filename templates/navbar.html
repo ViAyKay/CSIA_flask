@@ -16,10 +16,13 @@
             <a class="nav-link" href="{{ url_for('borrowerview') }}">Borrowers</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('borrowview') }}">Borrows</a>
+            <a class="nav-link" href="{{ url_for('borrowview') }}">Active Borrows</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('borrowadd') }}">Add Borrow</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
           </li>
           
       </ul>
@@ -29,10 +32,5 @@
         <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search Book</button>
       </form>
     </ul>
-    <form method="POST" action="{{url_for('borrowersearch')}}" class="form-inline my-2 my-lg-0">
-      {{ form.hidden_tag() }}
-      <input class="form-control mr-sm-2" type="search" placeholder="Enter First Name" aria-label="Search",   name="searched">
-      <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search Borrower</button>
-    </form>
     </div>
   </nav>
