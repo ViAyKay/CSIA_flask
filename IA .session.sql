@@ -1,1 +1,1 @@
-DELETE FROM borrower WHERE id=14
+DELETE FROM borrow WHERE id=14
