@@ -484,6 +484,16 @@ def borrowview():
 
     return render_template('borrowview.html', borrows = borrows, todays_date=todays_date)
 
+@app.route('/borrowhistory')
+def borrowhistory():
+    todays_date = date.today()
+    borrows = Borrow.query.order_by(Borrow.id)
+    for borrow in borrows:
+        if (todays_date - borrow.return_date).days > 1:
+            borrow.overdue = True
+
+    return render_template('allborrows.html', borrows = borrows, todays_date=todays_date)
+
 
 #Error Handling
 @app.errorhandler(404)
