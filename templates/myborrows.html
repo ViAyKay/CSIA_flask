@@ -13,7 +13,7 @@
 
    
 <h1>Your borrow history</h1>
-<h2>Your id is: {{ current_user }}</h2>
+<!--<h2>Your id is: {{ current_user }}</h2>-->
     <br>
     <table class="table table-striped table-bordered table-hover">
       <thead class="thead-dark">
@@ -34,7 +34,7 @@
         <!--<td>{{ borrow.borrower_id }}</td>-->
         <td>{{ borrow.borrow_date }}</td>
         <td>{{ borrow.return_date }}</td>
-        <td>{% if borrow.overdue %}</td>
+        <td>{% if borrow.overdue %}
           <p style="color:red">Overdue</p>
           {% else %}
           <p style="color:green">Not Overdue</p>

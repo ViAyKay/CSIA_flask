@@ -23,7 +23,8 @@
           <th scope="col">Borrower</th>
           <th scope="col">Borrow Date</th>
           <th scope="col">Return Date</th>
-          <th scope="col">Status</th>          
+          <th scope="col">Status</th>
+          <th scope="col">Returned</th>          
         </tr>
       </thead>
       <tbody>  
@@ -33,14 +34,18 @@
         <td>{{ borrow.id }}</td>
         <td>{{ borrow.book.title }}</td>
         <td>{{ borrow.borrower.first_name }} {{ borrow.borrower.last_name }}</td>
-        <td>{{ borrow.book.title }}</td>
+        <td>{{ borrow.borrow_date}}</td>
         <td>{{ borrow.return_date }}</td>
-        <td>{% if borrow.overdue %}</td>
+        <td>{% if borrow.overdue %}
           <p style="color:red">Overdue</p>
           {% else %}
           <p style="color:green">Not Overdue</p>
-          {% endif %}</td> 
-        <td><a href="{{ url_for('returnbook', id=borrow.id) }}" class="btn btn-outline-danger">Confirm Return</a></td>  
+          {% endif %}</td>
+          <td>{% if borrow.returned %}</td>
+          Yes
+          {% else %}
+          No
+          {% endif %}</td>  
     
       </tr>
       {% endfor %}

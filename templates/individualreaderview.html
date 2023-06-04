@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+
+    <br>     
+        <p>ID Number: {{ reader.id }}</p>       
+        <p>First Name: {{ reader.first_name }}</p>
+        <p>Last Name: {{ reader.last_name }}</p>
+        <p>Email: {{ reader.email }}</p>
+        <p>Number of Late Returns: {{ reader.late_returns }}</p>
+        
+{% endblock %}

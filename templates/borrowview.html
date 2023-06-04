@@ -36,7 +36,7 @@
         <td>{{ borrow.borrower.first_name }} {{ borrow.borrower.last_name }}</td>
         <td>{{ borrow.book.title }}</td>
         <td>{{ borrow.return_date }}</td>
-        <td>{% if borrow.overdue %}</td>
+        <td>{% if borrow.overdue %}
           <p style="color:red">Overdue</p>
           {% else %}
           <p style="color:green">Not Overdue</p>

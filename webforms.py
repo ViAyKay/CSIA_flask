@@ -3,7 +3,7 @@ from wtforms import StringField, SubmitField, PasswordField, BooleanField, Valid
 from wtforms.validators import DataRequired, NumberRange, Email
 from wtforms.widgets import TextArea
 
-#Form for adding new borrower
+#Form for adding new borrow
 class BorrowForm(FlaskForm):
     book_id = IntegerField("book id", validators=[DataRequired(), NumberRange(min=1, max=100)])
     borrower_id = IntegerField("borrower id", validators=[DataRequired(), NumberRange(min=1, max=100)])
@@ -14,6 +14,7 @@ class BorrowerForm(FlaskForm):
     first_name = StringField("First Name", validators=[DataRequired()])
     last_name = StringField("Last Name", validators=[DataRequired()])
     email = EmailField("Email", validators=[DataRequired(), Email("Enter a valid email address")], widget=TextArea() )
+    late_returns = IntegerField("Late Returns", validators=[DataRequired()] )
     password_hash = PasswordField("Password", validators=[DataRequired()])
     verify_password_hash = PasswordField("Re-enter Password", validators=[DataRequired()])
     submit = SubmitField("Submit")

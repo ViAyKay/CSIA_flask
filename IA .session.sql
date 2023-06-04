@@ -1,1 +1,1 @@
-DELETE FROM borrow WHERE id=14
+DELETE FROM book WHERE id=16
