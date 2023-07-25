@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError, EmailField, IntegerField
-from wtforms.validators import DataRequired, NumberRange, Email
+from wtforms.validators import DataRequired, NumberRange, Email, Optional
 from wtforms.widgets import TextArea
 
 #Form for adding new borrow
@@ -13,10 +13,18 @@ class BorrowForm(FlaskForm):
 class BorrowerForm(FlaskForm):
     first_name = StringField("First Name", validators=[DataRequired()])
     last_name = StringField("Last Name", validators=[DataRequired()])
-    email = EmailField("Email", validators=[DataRequired(), Email("Enter a valid email address")], widget=TextArea() )
-    late_returns = IntegerField("Late Returns", validators=[DataRequired()] )
+    email = EmailField("Email", validators=[DataRequired(), Email("Enter a valid email address")], widget=TextArea())
+    late_returns = IntegerField("Late Returns")
     password_hash = PasswordField("Password", validators=[DataRequired()])
     verify_password_hash = PasswordField("Re-enter Password", validators=[DataRequired()])
+    submit = SubmitField("Submit")
+
+#Form for editing borrower details
+class EditBorrowerForm(FlaskForm):
+    first_name = StringField("First Name",validators=[DataRequired()])
+    last_name = StringField("Last Name",validators=[DataRequired()])
+    email = EmailField("Email",validators=[DataRequired()])
+    late_returns = IntegerField("Late Returns",validators=[Optional()])
     submit = SubmitField("Submit")
 
 #Form to search books or borrowers
@@ -29,7 +37,7 @@ class BookForm(FlaskForm):
     title = StringField("Title", validators=[DataRequired()])
     author = StringField("Author", validators=[DataRequired()])
     synopsis = StringField("Synopsis", validators=[DataRequired()], widget=TextArea())
-    available = BooleanField("Availability", validators=[DataRequired()])
+    available = BooleanField("Availability")
     submit = SubmitField("Submit")
 
 #Form to add user
@@ -49,3 +57,4 @@ class LoginForm(FlaskForm):
 class LoginChoiceForm(FlaskForm):
     librarian_login = SubmitField("Librarian Login")
     borrower_login = SubmitField("Reader Login") 
+

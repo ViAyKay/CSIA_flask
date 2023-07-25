@@ -30,7 +30,9 @@
     {{ form.available.label(class="form-label") }}
     {{ form.available(class="form-check-input") }}
     <br/>
-    {{ form.submit(class="btn btn-primary") }} 
+    {{ form.submit(class="btn btn-primary") }}
+  <br>
+  <a href="{{ url_for('viewbook', id=id) }}" class="btn btn-outline-danger">Back</a>
 </div>
         
 {% endblock %}

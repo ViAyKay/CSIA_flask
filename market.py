@@ -6,7 +6,7 @@ from datetime import date
 from datetime import timedelta
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user 
 from werkzeug.security import generate_password_hash, check_password_hash
-from webforms import BorrowForm, BorrowerForm, SearchForm, BookForm, UserForm, LoginForm
+from webforms import BorrowForm, BorrowerForm, SearchForm, BookForm, UserForm, LoginForm, EditBorrowerForm
 from flask_migrate import Migrate
 import uuid as uuid
 from sqlalchemy import update
@@ -18,9 +18,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:dangerzone@localhost/libra
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app) #Creates instance of SQLAlchemy
 migrate = Migrate(app, db)
-app.config['SECRET_KEY'] = "asgkuaghpuiweghowiuhglauhgpagksudhgiwuerhwlagwes"
+app.config['SECRET_KEY'] = "asgkuaghpuiweghowiuhglauhgpagksudhgiwuerhwlagwes" #Security
 
-#Login, Authenitcation and Registeration
+#Login, Authentication and Registeration
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -141,10 +141,10 @@ def borroweradd():
                 flash("Passwords do not match")
 
 
-        flash("Reader added to database successfully")
+        flash("You have been registered successfully")
         return redirect(url_for('loginchoice'))
-    else:
-        flash("Please enter valid information")
+    #else:
+        #flash("Please enter valid information")
 
 
     return render_template("registeration.html", form=form)
@@ -255,12 +255,12 @@ def edit_book(id):
         db.session.add(book)
         db.session.commit()
         flash("Book information has been updated")
-        return redirect(url_for('books'))
+        return redirect(url_for('bookview'))
     form.title.data = book.title
     form.author.data = book.author
     form.synopsis.data = book.synopsis
     form.available.data = book.available
-    return render_template('edit_book.html', form=form)
+    return render_template('edit_book.html', form=form, id=id)
 
 #Delete book   
 @app.route('/books/delete/<int:id>')
@@ -316,8 +316,8 @@ def readerbooksearch():
 @app.route('/readerbookview', methods=['GET', 'POST'])
 @login_required
 def readerbookview():
-        #Grab all books from database
-    books = Book.query.order_by(Book.id)
+        
+    books = Book.query.order_by(Book.id) #Grab all books from database
     return render_template('readerbookview.html', books = books)
 
 #Readers
@@ -326,8 +326,8 @@ def readerbookview():
 @app.route('/readerview', methods=['GET', 'POST'])
 @login_required
 def readerview():
-    #Grab all readers from database
-    readers = Reader.query.order_by(Reader.id)
+    
+    readers = Reader.query.order_by(Reader.id) #Grab all readers from database
     return render_template('readerview.html', readers = readers)
 
 #Edit reader details
@@ -335,7 +335,7 @@ def readerview():
 @login_required
 def edit_borrower(id):
     reader = Reader.query.get_or_404(id)
-    form = BorrowerForm()
+    form = EditBorrowerForm()
     if form.validate_on_submit():
         reader.first_name = form.first_name.data
         reader.last_name = form.last_name.data
@@ -344,12 +344,15 @@ def edit_borrower(id):
 
         db.session.add(reader)
         db.session.commit()
-        flash("Book information has been updated")
-        return redirect(url_for('brwrview'))
+        flash("Reader information has been updated")
+        print ("we changed something")
+        return redirect(url_for('readerview'))
+    else :
+        print ("there was an issue")
     form.first_name.data = reader.first_name
     form.last_name.data = reader.last_name
     form.email.data = reader.email
-    return render_template('edit_borrower.html', form=form)
+    return render_template('edit_borrower.html', form=form, id=id)
 
 #View reader details
 @app.route('/readerview/<int:id>', methods=['GET', 'POST'])

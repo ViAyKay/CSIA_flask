@@ -2,12 +2,18 @@
 
 
 {% block content %}
-
+<div class="shadow-lg w-30 p-3 mb-5 bg-white rounded mx-auto">
     <br>     
         <p>ID Number: {{ reader.id }}</p>       
         <p>First Name: {{ reader.first_name }}</p>
         <p>Last Name: {{ reader.last_name }}</p>
         <p>Email: {{ reader.email }}</p>
         <p>Number of Late Returns: {{ reader.late_returns }}</p>
+
+        <a href="{{ url_for('edit_borrower', id=reader.id) }}" class="btn btn-outline-secondary">Edit Reader</a>  
+        <a href="{{ url_for('borrowerdelete', id=reader.id) }}" class="btn btn-outline-danger">Delete Reader</a>
+        <a href="{{ url_for('readerview') }}" class="btn btn-primary">Back</a>
+</div>
+</div>
         
 {% endblock %}

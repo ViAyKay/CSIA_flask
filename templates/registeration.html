@@ -44,7 +44,11 @@ height: 100vh">
         {{ form.verify_password_hash.label(class="form-label") }}
         {{ form.verify_password_hash(class="form-control") }}
         <br/>
-        {{ form.submit(class="btn btn-primary") }} 
+        {{ form.submit(class="btn btn-primary btn-block") }}
+      </form>
+      <br>
+      <a href="{{ url_for('loginchoice') }}" class="btn btn-primary btn-block">Back</a>
+  
     </div>
 
 </html>

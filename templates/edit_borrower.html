@@ -12,7 +12,7 @@
 </div>
 {% endfor %}
 
-<h1>Enter the book information here</h1> 
+<h1>Enter the reader information here</h1> 
 <br>
 <div class="shadow w-25 p-3 mb-5 bg-white rounded mx-auto">
     <form method="POST">
@@ -31,5 +31,8 @@
         {{ form.late_returns(class="form-control") }}
         <br/>
         {{ form.submit(class="btn btn-primary") }} 
-    </div      
+    </form>
+    <a href="{{ url_for('borrowerlook', id=id) }}" class="btn btn-primary">Back</a>
+    </div>
+      
 {% endblock %}
